@@ -1,4 +1,4 @@
-// https://docs.rs/ocl/0.15.0/ocl/
+// https://docs.rs/ocl/
 extern crate ocl;
 
 extern crate number_prefix;
