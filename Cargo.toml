@@ -6,3 +6,5 @@ authors = ["Gabriel Majeri <gabriel.majeri6@gmail.com>"]
 [dependencies]
 ocl = "0.16"
 number_prefix = "0.2"
+rand = "0.3"
+float-cmp = "0.2"
