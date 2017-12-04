@@ -1,4 +1,6 @@
-use ocl::ProQue;
+use ocl::{ProQue, Buffer};
+use ocl::flags::MemFlags;
+
 use rand::{thread_rng, Rng};
 use float_cmp::ApproxEqRatio;
 
@@ -13,15 +15,30 @@ pub fn vadd() {
         .build()
         .expect("Failed to create OpenCL context");
 
-    let a = thread_rng().gen_iter::<f32>().take(SIZE).collect::<Vec<_>>();
-    let a_buf = pro_que.create_buffer::<f32>().unwrap();
-    a_buf.write(&a).enq().unwrap();
+    let generate_data = || {
+        thread_rng().gen_iter::<f32>().take(SIZE).collect::<Vec<_>>()
+    };
 
-    let b = thread_rng().gen_iter::<f32>().take(SIZE).collect::<Vec<_>>();
-    let b_buf = pro_que.create_buffer::<f32>().unwrap();
-    b_buf.write(&b).enq().unwrap();
+    let a = generate_data();
+    let b = generate_data();
 
-    let dest_buf = pro_que.create_buffer::<f32>().unwrap();
+    let build_buffer = |data| {
+        Buffer::<f32>::builder()
+            .queue(pro_que.queue().clone())
+            .dims(SIZE)
+            .flags(MemFlags::new().read_only().copy_host_ptr())
+            .host_data(data)
+            .build().expect("Failed to create buffer")
+    };
+
+    let a_buf = build_buffer(&a);
+    let b_buf = build_buffer(&b);
+
+    let dest_buf = Buffer::<f32>::builder()
+        .queue(pro_que.queue().clone())
+        .dims(SIZE)
+        .flags(MemFlags::new().write_only())
+        .build().expect("Failed to create destination buffer");
 
     let vadd = pro_que.create_kernel("vadd").expect("Failed to compile OpenCL kernel")
         .arg_buf(&a_buf)
