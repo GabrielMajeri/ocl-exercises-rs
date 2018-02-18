@@ -6,9 +6,9 @@ extern crate rand;
 extern crate float_cmp;
 
 mod ex1;
-mod ex2;
+mod ex4;
 
 fn main() {
     ex1::opencl_info();
-    ex2::vadd();
+    ex4::vadd();
 }
