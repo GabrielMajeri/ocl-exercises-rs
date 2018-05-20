@@ -28,9 +28,9 @@ pub fn vadd() {
     let build_buffer = |data| {
         Buffer::<f32>::builder()
             .queue(pro_que.queue().clone())
-            .dims(SIZE)
+            .len(SIZE)
             .flags(MemFlags::new().read_only().copy_host_ptr())
-            .host_data(data)
+            .copy_host_slice(data)
             .build().expect("Failed to create buffer")
     };
 
@@ -41,7 +41,7 @@ pub fn vadd() {
     let build_destination_buffer = || {
         Buffer::<f32>::builder()
         .queue(pro_que.queue().clone())
-        .dims(SIZE)
+        .len(SIZE)
         .flags(MemFlags::new().write_only())
         .build().expect("Failed to create destination buffer")
     };
@@ -50,19 +50,21 @@ pub fn vadd() {
 
     let dest_buf1 = build_destination_buffer();
 
-    let vadd = pro_que.create_kernel("vadd").expect("Failed to compile OpenCL kernel")
-        .arg_buf(&a_buf)
-        .arg_buf(&b_buf)
-        .arg_buf(&dest_buf0);
+    let vadd = pro_que.kernel_builder("vadd")
+        .arg(&a_buf)
+        .arg(&b_buf)
+        .arg(&dest_buf0)
+        .build().expect("Failed to compile OpenCL kernel");
 
     unsafe {
         vadd.enq().expect("Failed to execute OpenCL kernel");
     }
 
-    let vadd = pro_que.create_kernel("vadd").expect("Failed to compile OpenCL kernel")
-        .arg_buf(&dest_buf0)
-        .arg_buf(&c_buf)
-        .arg_buf(&dest_buf1);
+    let vadd = pro_que.kernel_builder("vadd")
+        .arg(&dest_buf0)
+        .arg(&c_buf)
+        .arg(&dest_buf1)
+        .build().expect("Failed to compile OpenCL kernel");
 
     unsafe {
         vadd.enq().expect("Failed to execute OpenCL kernel");

@@ -7,7 +7,7 @@ macro_rules! get_info {
     ($dev:ident, $name:ident) => {{
         use $crate::ocl::enums::{DeviceInfo, DeviceInfoResult};
         match $dev.info(DeviceInfo::$name) {
-            DeviceInfoResult::$name(value) => value,
+            Ok(DeviceInfoResult::$name(value)) => value,
             _ => panic!("Failed to retrieve device {}", stringify!($name)),
         }
     }};
@@ -26,52 +26,57 @@ pub fn opencl_info() {
 
     println!("Number of OpenCL platforms: {}", platforms.len());
 
-    for pl in platforms {
-        println!(" * {}", pl.name());
-        println!(" - Vendor: {}", pl.vendor());
-        println!(" - Version: {}", pl.version());
+    platforms.iter().for_each(print_platform_info);
+}
 
-        let devices = ocl::Device::list_all(pl).expect("Failed to list platform devices");
+fn print_platform_info(pl: &ocl::Platform) {
+    println!(" * {}", pl.name().expect("Failed to retrieve platform name"));
+    println!(" - Vendor: {}", pl.vendor().expect("Failed to retrieve platform vendor"));
+    println!(" - Version: {}", pl.version().expect("Failed to retrieve platform verison"));
 
-        println!(" - Device count: {}", devices.len());
+    let devices = ocl::Device::list_all(pl)
+        .expect("Failed to list platform devices");
 
-        for dev in devices {
-            // Some general information.
-            println!("  * {}", dev.name());
+    println!(" - Device count: {}", devices.len());
 
-            let version = dev.version().expect("Failed to retrieve device version");
-            println!("  - Version: {}", version);
+    devices.iter().for_each(print_device_info);
+}
 
-            // Information related to work-groups and work items.
-            println!("  * Work-group information");
+fn print_device_info(dev: &ocl::Device) {
+    // Some general information.
+    println!("  * {}", dev.name().expect("Failed to retrieve device name"));
 
-            let max_compute_units = get_info!(dev, MaxComputeUnits);
-            println!("   - Maximum compute units: {}", max_compute_units);
+    let version = dev.version().expect("Failed to retrieve device version");
+    println!("  - Version: {}", version);
 
-            let max_wg_size = dev.max_wg_size().expect(
-                "Failed to retrieve max work-group size",
-            );
-            println!("   - Maximum work-group total size: {}", max_wg_size);
+    // Information related to work-groups and work items.
+    println!("  * Work-group information");
 
-            let max_wi_sizes = get_info!(dev, MaxWorkItemSizes);
-            println!("   - Maximum work item dimensions: {:?}", max_wi_sizes);
+    let max_compute_units = get_info!(dev, MaxComputeUnits);
+    println!("   - Maximum compute units: {}", max_compute_units);
 
-            // Information related to memory and memory allocation.
-            println!("  * Memory information");
+    let max_wg_size = dev.max_wg_size().expect(
+        "Failed to retrieve max work-group size",
+    );
+    println!("   - Maximum work-group total size: {}", max_wg_size);
 
-            let local_mem_size = get_memory!(dev, LocalMemSize);
-            println!("   - Local memory size: {}", local_mem_size);
+    let max_wi_sizes = get_info!(dev, MaxWorkItemSizes);
+    println!("   - Maximum work item dimensions: {:?}", max_wi_sizes);
 
-            let global_mem_size = get_memory!(dev, GlobalMemSize);
-            println!("   - Global memory size: {}", global_mem_size);
+    // Information related to memory and memory allocation.
+    println!("  * Memory information");
 
-            let max_mem_alloc_size = get_memory!(dev, MaxMemAllocSize);
-            println!(
-                "   - Maximum memory allocation size: {}",
-                max_mem_alloc_size
-            );
-        }
-    }
+    let local_mem_size = get_memory!(dev, LocalMemSize);
+    println!("   - Local memory size: {}", local_mem_size);
+
+    let global_mem_size = get_memory!(dev, GlobalMemSize);
+    println!("   - Global memory size: {}", global_mem_size);
+
+    let max_mem_alloc_size = get_memory!(dev, MaxMemAllocSize);
+    println!(
+        "   - Maximum memory allocation size: {}",
+        max_mem_alloc_size
+    );
 }
 
 /// Converts an amount of memory to a human-readable value.
