@@ -1,4 +1,12 @@
-// This solves both exercise 2 and exercise 4.
+//! # Exercise 2
+//!
+//! Run a simple kernel which adds two vector, and stores the result in a third one.
+//!
+//! # Exercise 4
+//!
+//! Same as exercise 2, but using multiple vectors.
+//!
+//! This solves both exercise 2 and exercise 4.
 
 use ocl::{ProQue, Buffer};
 use ocl::flags::MemFlags;
