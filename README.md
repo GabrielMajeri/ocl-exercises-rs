@@ -18,3 +18,4 @@ To run the exercises, use `cargo run --release --bin <exercise name>`.
 - Exercise 4: SOLVED, same files as exercise 2
 - Exercise 5: SOLVED
 - Exercise 6: SOLVED
+- Exercise 7: SOLVED
