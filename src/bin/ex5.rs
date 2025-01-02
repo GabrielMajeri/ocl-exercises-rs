@@ -10,12 +10,12 @@ const SEED: u64 = 42;
 const SIZE: usize = 1024;
 
 fn main() {
-    println!("# Exercises 2 & 4 - Vector addition");
-    println!("Run a simple kernel which adds two vector, and stores the result in a third one");
-    vadd();
+    println!("# Exercises 5 - Triple vector addition");
+    println!("Construct a kernel which directly adds three input vector into a single output vector");
+    vadd3();
 }
 
-pub fn vadd() {
+pub fn vadd3() {
     // Generate some vectors containing random data.
     let mut rng = StdRng::seed_from_u64(SEED);
 
@@ -28,7 +28,7 @@ pub fn vadd() {
     let c = generate_data(&mut rng);
 
     // Load the OCL kernel source code.
-    let kernel = include_str!("../kernels/vadd.cl");
+    let kernel = include_str!("../kernels/vadd3.cl");
 
     // Compile the kernel into a runnable program.
     let pro_que = ProQue::builder()
@@ -38,7 +38,7 @@ pub fn vadd() {
         .expect("Failed to create OpenCL context");
 
     // Create buffers for the input vectors.
-    let build_input_buffer = |data| {
+    let build_input_buffer = |data: &[f32]| {
         Buffer::<f32>::builder()
             .queue(pro_que.queue().clone())
             .len(SIZE)
@@ -61,35 +61,23 @@ pub fn vadd() {
             .build().expect("Failed to create destination buffer")
     };
 
-    let dest_buf0 = build_destination_buffer();
-
-    let dest_buf1 = build_destination_buffer();
+    let dest_buf = build_destination_buffer();
 
     // Execute `dest_buf0 = a_buf + b_buf`
-    let vadd = pro_que.kernel_builder("vadd")
+    let vadd3 = pro_que.kernel_builder("vadd3")
         .arg(&a_buf)
         .arg(&b_buf)
-        .arg(&dest_buf0)
-        .build().expect("Failed to compile OpenCL kernel");
-
-    unsafe {
-        vadd.enq().expect("Failed to execute OpenCL kernel");
-    }
-
-    // Execute `dest_buf1 = dest_buf0 + c_buf`
-    let vadd = pro_que.kernel_builder("vadd")
-        .arg(&dest_buf0)
         .arg(&c_buf)
-        .arg(&dest_buf1)
+        .arg(&dest_buf)
         .build().expect("Failed to compile OpenCL kernel");
 
     unsafe {
-        vadd.enq().expect("Failed to execute OpenCL kernel");
+        vadd3.enq().expect("Failed to execute OpenCL kernel");
     }
 
     // Read back the result into `dest`.
     let mut dest = vec![0.0; SIZE];
-    dest_buf1.read(&mut dest).enq().unwrap();
+    dest_buf.read(&mut dest).enq().unwrap();
 
     let index = rng.gen_range(0..SIZE);
 

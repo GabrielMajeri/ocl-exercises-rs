@@ -12,6 +12,6 @@ They use the high-quality [ocl][ocl] library, which provides high-level OpenCL w
 
 - Exercise 1: SOLVED
 - Exercise 2: SOLVED
-- Exercise 3: N/A
-- Exercise 4: SOLVED, same files as ex. 2
-- Exercise 5: not yet started
+- Exercise 3: N/A, just have to run the code from exercise 2
+- Exercise 4: SOLVED, same files as exercise 2
+- Exercise 5: SOLVED
