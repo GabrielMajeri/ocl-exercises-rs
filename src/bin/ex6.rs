@@ -98,14 +98,25 @@ pub fn matmul() {
 
     let mut event = Event::empty();
     unsafe {
-        matmul.cmd().enew(&mut event).enq()
+        matmul
+            .cmd()
+            .enew(&mut event)
+            .enq()
             .expect("Failed to execute OpenCL kernel");
     }
 
     pro_que.queue().finish().unwrap();
 
-    let start = event.profiling_info(ProfilingInfo::Start).unwrap().time().unwrap();
-    let end = event.profiling_info(ProfilingInfo::End).unwrap().time().unwrap();
+    let start = event
+        .profiling_info(ProfilingInfo::Start)
+        .unwrap()
+        .time()
+        .unwrap();
+    let end = event
+        .profiling_info(ProfilingInfo::End)
+        .unwrap()
+        .time()
+        .unwrap();
     let opencl_time = Duration::from_nanos(end - start);
 
     // Read back the result into `dest`.
