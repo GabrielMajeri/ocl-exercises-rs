@@ -1,8 +1,13 @@
-//! # Exercise 1 - Platform Information
-//! Verify that running a simple OpenCL program works.
-
 use ocl;
 
+fn main() {
+    println!("# Exercise 1 - Platform Information");
+    println!("Verify that running a simple OpenCL program works");
+    opencl_info();
+}
+
+/// Macro used to simplify the process for retrieving information
+/// about a certain device.
 macro_rules! get_info {
     ($dev:ident, $name:ident) => {{
         use $crate::ocl::enums::{DeviceInfo, DeviceInfoResult};
@@ -13,6 +18,7 @@ macro_rules! get_info {
     }};
 }
 
+/// Macro used to retrieve information about the memory of a certain device.
 macro_rules! get_memory {
     ($dev:ident, $name:ident) => {{
         let memory = get_info!($dev, $name);
@@ -81,9 +87,9 @@ fn print_device_info(dev: &ocl::Device) {
 
 /// Converts an amount of memory to a human-readable value.
 fn memory_to_string(memory: usize) -> String {
-    use number_prefix::{binary_prefix, Standalone, Prefixed};
-    match binary_prefix(memory as f64) {
-        Standalone(bytes) => format!("{} bytes", bytes),
-        Prefixed(prefix, n) => format!("{:.0} {}B", n, prefix),
+    use number_prefix::NumberPrefix;
+    match NumberPrefix::binary(memory as f64) {
+        NumberPrefix::Standalone(bytes) => format!("{} bytes", bytes),
+        NumberPrefix::Prefixed(prefix, n) => format!("{:.0} {}B", n, prefix),
     }
 }

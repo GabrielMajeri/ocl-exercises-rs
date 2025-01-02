@@ -1,11 +1,12 @@
 [package]
 name = "ocl-exercises"
 version = "0.1.0"
+edition = "2021"
 authors = ["Gabriel Majeri <gabriel.majeri6@gmail.com>"]
 build = "src/build.rs"
 
 [dependencies]
-ocl = "0.18"
-number_prefix = "0.2"
-rand = "0.4"
-float-cmp = "0.4"
+ocl = "0.19"
+number_prefix = "0.4"
+rand = "0.8"
+float-cmp = "0.10"

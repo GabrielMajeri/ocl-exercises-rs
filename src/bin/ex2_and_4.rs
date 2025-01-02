@@ -1,38 +1,43 @@
-//! # Exercise 2
-//!
-//! Run a simple kernel which adds two vector, and stores the result in a third one.
-//!
-//! # Exercise 4
-//!
-//! Same as exercise 2, but using multiple vectors.
-//!
-//! This solves both exercise 2 and exercise 4.
-
 use ocl::{ProQue, Buffer};
 use ocl::flags::MemFlags;
 
-use rand::{thread_rng, Rng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::distributions::Standard;
+
 use float_cmp::ApproxEqRatio;
 
+const SEED: u64 = 42;
 const SIZE: usize = 1024;
 
-pub fn vadd() {
-    let kernel = include_str!("kernels/vadd.cl");
+fn main() {
+    println!("# Exercises 2 & 4 - Vector addition");
+    println!("Run a simple kernel which adds two vector, and stores the result in a third one");
+    vadd();
+}
 
+pub fn vadd() {
+    // Generate some vectors containing random data.
+    let mut rng = StdRng::seed_from_u64(SEED);
+
+    fn generate_data(rng: &mut StdRng) -> Vec<f32> {
+        rng.sample_iter(Standard).take(SIZE).collect()
+    }
+
+    let a = generate_data(&mut rng);
+    let b = generate_data(&mut rng);
+    let c = generate_data(&mut rng);
+
+    // Load the OCL kernel source code.
+    let kernel = include_str!("../kernels/vadd.cl");
+
+    // Compile the kernel into a runnable program.
     let pro_que = ProQue::builder()
         .src(kernel)
         .dims(SIZE)
         .build()
         .expect("Failed to create OpenCL context");
 
-    let generate_data = || {
-        thread_rng().gen_iter::<f32>().take(SIZE).collect::<Vec<_>>()
-    };
-
-    let a = generate_data();
-    let b = generate_data();
-    let c = generate_data();
-
+    // Create buffers for the input vectors.
     let build_buffer = |data| {
         Buffer::<f32>::builder()
             .queue(pro_que.queue().clone())
@@ -48,16 +53,17 @@ pub fn vadd() {
 
     let build_destination_buffer = || {
         Buffer::<f32>::builder()
-        .queue(pro_que.queue().clone())
-        .len(SIZE)
-        .flags(MemFlags::new().write_only())
-        .build().expect("Failed to create destination buffer")
+            .queue(pro_que.queue().clone())
+            .len(SIZE)
+            .flags(MemFlags::new().write_only())
+            .build().expect("Failed to create destination buffer")
     };
 
     let dest_buf0 = build_destination_buffer();
 
     let dest_buf1 = build_destination_buffer();
 
+    // Execute `dest_buf0 = a_buf + b_buf`
     let vadd = pro_que.kernel_builder("vadd")
         .arg(&a_buf)
         .arg(&b_buf)
@@ -68,6 +74,7 @@ pub fn vadd() {
         vadd.enq().expect("Failed to execute OpenCL kernel");
     }
 
+    // Execute `dest_buf1 = dest_buf0 + c_buf`
     let vadd = pro_que.kernel_builder("vadd")
         .arg(&dest_buf0)
         .arg(&c_buf)
@@ -78,10 +85,11 @@ pub fn vadd() {
         vadd.enq().expect("Failed to execute OpenCL kernel");
     }
 
+    // Read back the result into `dest`.
     let mut dest = vec![0.0; SIZE];
     dest_buf1.read(&mut dest).enq().unwrap();
 
-    let index = thread_rng().gen_range(0, SIZE);
+    let index = rng.gen_range(0..SIZE);
 
     let x = a[index];
     let y = b[index];
