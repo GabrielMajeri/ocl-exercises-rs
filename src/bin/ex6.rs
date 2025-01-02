@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use ocl::flags::MemFlags;
 use ocl::{Buffer, ProQue};
 
@@ -26,6 +28,26 @@ pub fn matmul() {
 
     let a = generate_data(&mut rng);
     let b = generate_data(&mut rng);
+
+    // Compute the result using the CPU.
+    let mut correct_result = vec![0.0; SIZE];
+
+    let start = Instant::now();
+    for i in 0..N {
+        for j in 0..N {
+            let mut accumulator = 0.0;
+            for k in 0..N {
+                unsafe {
+                    let x = *a.get_unchecked(i * N + k);
+                    let y = *b.get_unchecked(k * N + j);
+                    accumulator += x * y;
+                }
+            }
+            correct_result[i * N + j] = accumulator;
+        }
+    }
+    let end = Instant::now();
+    let cpu_time = end.duration_since(start);
 
     // Load the OCL kernel source code.
     let kernel = include_str!("../kernels/matmul.cl");
@@ -72,9 +94,12 @@ pub fn matmul() {
         .build()
         .expect("Failed to compile OpenCL kernel");
 
+    let start = Instant::now();
     unsafe {
         matmul.enq().expect("Failed to execute OpenCL kernel");
     }
+    let end = Instant::now();
+    let opencl_time = end.duration_since(start);
 
     // Read back the result into `dest`.
     let mut dest = vec![0.0; SIZE];
@@ -83,10 +108,7 @@ pub fn matmul() {
     let (row, column) = (rng.gen_range(0..N), rng.gen_range(0..N));
 
     let result = dest[row * N + column];
-    let mut correct_result = 0.0;
-    for k in 0..N {
-        correct_result += a[row * N + k] * b[k * N + column];
-    }
+    let correct_result = correct_result[row * N + column];
 
     let correct = if result.approx_eq_ratio(&correct_result, 0.001) {
         '✓'
@@ -98,4 +120,7 @@ pub fn matmul() {
         "(A[{}, :] @ B[:, {}]) = {} {}",
         row, column, result, correct
     );
+
+    println!("CPU time: {:?}", cpu_time);
+    println!("OpenCL time: {:?}", opencl_time);
 }

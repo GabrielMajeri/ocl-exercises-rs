@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use ocl::flags::MemFlags;
 use ocl::{Buffer, ProQue};
 
@@ -28,6 +30,20 @@ pub fn vadd3() {
     let a = generate_data(&mut rng);
     let b = generate_data(&mut rng);
     let c = generate_data(&mut rng);
+
+    // Compute the result using the CPU.
+    let start = Instant::now();
+    let mut correct_result = vec![0.0; SIZE];
+    for i in 0..SIZE {
+        unsafe {
+            let x = *a.get_unchecked(i);
+            let y = *b.get_unchecked(i);
+            let z = *c.get_unchecked(i);
+            *correct_result.get_unchecked_mut(i) = x + y + z;
+        }
+    }
+    let end = Instant::now();
+    let cpu_time = end.duration_since(start);
 
     // Load the OCL kernel source code.
     let kernel = include_str!("../kernels/vadd3.cl");
@@ -77,9 +93,12 @@ pub fn vadd3() {
         .build()
         .expect("Failed to compile OpenCL kernel");
 
+    let start = Instant::now();
     unsafe {
         vadd3.enq().expect("Failed to execute OpenCL kernel");
     }
+    let end = Instant::now();
+    let opencl_time = end.duration_since(start);
 
     // Read back the result into `dest`.
     let mut dest = vec![0.0; SIZE];
@@ -101,4 +120,7 @@ pub fn vadd3() {
     };
 
     println!("{} + {} + {} = {} {}", x, y, z, sum, correct);
+
+    println!("CPU time: {:?}", cpu_time);
+    println!("OpenCL time: {:?}", opencl_time);
 }
