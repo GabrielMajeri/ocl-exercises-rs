@@ -47,6 +47,8 @@ pub fn vadd() {
             .build().expect("Failed to create buffer")
     };
 
+    // We will have three input buffers,
+    // each being a vector with randomly-initialized values.
     let a_buf = build_buffer(&a);
     let b_buf = build_buffer(&b);
     let c_buf = build_buffer(&c);

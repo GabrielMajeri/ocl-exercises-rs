@@ -28,19 +28,23 @@ macro_rules! get_memory {
 
 /// Prints some information about the OpenCL environment.
 pub fn opencl_info() {
+    // Get the list of available OpenCL platforms on this computer.
     let platforms = ocl::Platform::list();
 
     println!("Number of OpenCL platforms: {}", platforms.len());
 
+    // Print information about each of them.
     platforms.iter().for_each(print_platform_info);
 }
 
-fn print_platform_info(pl: &ocl::Platform) {
-    println!(" * {}", pl.name().expect("Failed to retrieve platform name"));
-    println!(" - Vendor: {}", pl.vendor().expect("Failed to retrieve platform vendor"));
-    println!(" - Version: {}", pl.version().expect("Failed to retrieve platform verison"));
+/// Prints some information about a given OpenCL platform.
+fn print_platform_info(platform: &ocl::Platform) {
+    println!(" * {}", platform.name().expect("Failed to retrieve platform name"));
+    println!(" - Vendor: {}", platform.vendor().expect("Failed to retrieve platform vendor"));
+    println!(" - Version: {}", platform.version().expect("Failed to retrieve platform verison"));
 
-    let devices = ocl::Device::list_all(pl)
+    // Retrieve all devices managed by this platform.
+    let devices = ocl::Device::list_all(platform)
         .expect("Failed to list platform devices");
 
     println!(" - Device count: {}", devices.len());
