@@ -1,8 +1,8 @@
-use ocl::{ProQue, Buffer};
 use ocl::flags::MemFlags;
+use ocl::{Buffer, ProQue};
 
-use rand::{Rng, SeedableRng, rngs::StdRng};
 use rand::distributions::Standard;
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
 use float_cmp::ApproxEqRatio;
 
@@ -11,7 +11,9 @@ const SIZE: usize = 1024;
 
 fn main() {
     println!("# Exercises 5 - Triple vector addition");
-    println!("Construct a kernel which directly adds three input vector into a single output vector");
+    println!(
+        "Construct a kernel which directly adds three input vector into a single output vector"
+    );
     vadd3();
 }
 
@@ -44,7 +46,8 @@ pub fn vadd3() {
             .len(SIZE)
             .flags(MemFlags::new().read_only().copy_host_ptr())
             .copy_host_slice(data)
-            .build().expect("Failed to create buffer")
+            .build()
+            .expect("Failed to create buffer")
     };
 
     // We will have three input buffers,
@@ -58,18 +61,21 @@ pub fn vadd3() {
             .queue(pro_que.queue().clone())
             .len(SIZE)
             .flags(MemFlags::new().write_only())
-            .build().expect("Failed to create destination buffer")
+            .build()
+            .expect("Failed to create destination buffer")
     };
 
     let dest_buf = build_destination_buffer();
 
     // Execute `dest_buf0 = a_buf + b_buf`
-    let vadd3 = pro_que.kernel_builder("vadd3")
+    let vadd3 = pro_que
+        .kernel_builder("vadd3")
         .arg(&a_buf)
         .arg(&b_buf)
         .arg(&c_buf)
         .arg(&dest_buf)
-        .build().expect("Failed to compile OpenCL kernel");
+        .build()
+        .expect("Failed to compile OpenCL kernel");
 
     unsafe {
         vadd3.enq().expect("Failed to execute OpenCL kernel");
@@ -88,7 +94,11 @@ pub fn vadd3() {
     let sum = dest[index];
     let good_sum = x + y + z;
 
-    let correct = if sum.approx_eq_ratio(&good_sum, 0.001) { '✓' } else { '❌' };
+    let correct = if sum.approx_eq_ratio(&good_sum, 0.001) {
+        '✓'
+    } else {
+        '❌'
+    };
 
     println!("{} + {} + {} = {} {}", x, y, z, sum, correct);
 }

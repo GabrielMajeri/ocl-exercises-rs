@@ -7,16 +7,17 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use float_cmp::ApproxEqRatio;
 
 const SEED: u64 = 42;
-const SIZE: usize = 1024;
+const N: usize = 64;
+const SIZE: usize = N * N;
 
 fn main() {
-    println!("# Exercises 2 & 4 - Vector addition");
-    println!("Run a simple kernel which adds two vector, and stores the result in a third one");
-    vadd();
+    println!("# Exercises 6 - Matrix multiplication");
+    println!("Construct a kernel which multiplies two square matrices");
+    matmul();
 }
 
-pub fn vadd() {
-    // Generate some vectors containing random data.
+pub fn matmul() {
+    // Generate some matrices containing random data.
     let mut rng = StdRng::seed_from_u64(SEED);
 
     fn generate_data(rng: &mut StdRng) -> Vec<f32> {
@@ -25,20 +26,19 @@ pub fn vadd() {
 
     let a = generate_data(&mut rng);
     let b = generate_data(&mut rng);
-    let c = generate_data(&mut rng);
 
     // Load the OCL kernel source code.
-    let kernel = include_str!("../kernels/vadd.cl");
+    let kernel = include_str!("../kernels/matmul.cl");
 
     // Compile the kernel into a runnable program.
     let pro_que = ProQue::builder()
         .src(kernel)
-        .dims(SIZE)
+        .dims((N, N))
         .build()
         .expect("Failed to create OpenCL context");
 
     // Create buffers for the input vectors.
-    let build_input_buffer = |data| {
+    let build_input_buffer = |data: &[f32]| {
         Buffer::<f32>::builder()
             .queue(pro_que.queue().clone())
             .len(SIZE)
@@ -48,11 +48,8 @@ pub fn vadd() {
             .expect("Failed to create buffer")
     };
 
-    // We will have three input buffers,
-    // each being a vector with randomly-initialized values.
     let a_buf = build_input_buffer(&a);
     let b_buf = build_input_buffer(&b);
-    let c_buf = build_input_buffer(&c);
 
     let build_destination_buffer = || {
         Buffer::<f32>::builder()
@@ -63,54 +60,42 @@ pub fn vadd() {
             .expect("Failed to create destination buffer")
     };
 
-    let dest_buf0 = build_destination_buffer();
+    let dest_buf = build_destination_buffer();
 
-    let dest_buf1 = build_destination_buffer();
-
-    // Execute `dest_buf0 = a_buf + b_buf`
-    let vadd = pro_que
-        .kernel_builder("vadd")
+    // Execute `dest_buf = a_buf @ b_buf`
+    let matmul = pro_que
+        .kernel_builder("matmul")
+        .arg(N as i32)
         .arg(&a_buf)
         .arg(&b_buf)
-        .arg(&dest_buf0)
+        .arg(&dest_buf)
         .build()
         .expect("Failed to compile OpenCL kernel");
 
     unsafe {
-        vadd.enq().expect("Failed to execute OpenCL kernel");
-    }
-
-    // Execute `dest_buf1 = dest_buf0 + c_buf`
-    let vadd = pro_que
-        .kernel_builder("vadd")
-        .arg(&dest_buf0)
-        .arg(&c_buf)
-        .arg(&dest_buf1)
-        .build()
-        .expect("Failed to compile OpenCL kernel");
-
-    unsafe {
-        vadd.enq().expect("Failed to execute OpenCL kernel");
+        matmul.enq().expect("Failed to execute OpenCL kernel");
     }
 
     // Read back the result into `dest`.
     let mut dest = vec![0.0; SIZE];
-    dest_buf1.read(&mut dest).enq().unwrap();
+    dest_buf.read(&mut dest).enq().unwrap();
 
-    let index = rng.gen_range(0..SIZE);
+    let (row, column) = (rng.gen_range(0..N), rng.gen_range(0..N));
 
-    let x = a[index];
-    let y = b[index];
-    let z = c[index];
+    let result = dest[row * N + column];
+    let mut correct_result = 0.0;
+    for k in 0..N {
+        correct_result += a[row * N + k] * b[k * N + column];
+    }
 
-    let sum = dest[index];
-    let good_sum = x + y + z;
-
-    let correct = if sum.approx_eq_ratio(&good_sum, 0.001) {
+    let correct = if result.approx_eq_ratio(&correct_result, 0.001) {
         '✓'
     } else {
         '❌'
     };
 
-    println!("{} + {} + {} = {} {}", x, y, z, sum, correct);
+    println!(
+        "(A[{}, :] @ B[:, {}]) = {} {}",
+        row, column, result, correct
+    );
 }

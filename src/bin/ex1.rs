@@ -39,13 +39,25 @@ pub fn opencl_info() {
 
 /// Prints some information about a given OpenCL platform.
 fn print_platform_info(platform: &ocl::Platform) {
-    println!(" * {}", platform.name().expect("Failed to retrieve platform name"));
-    println!(" - Vendor: {}", platform.vendor().expect("Failed to retrieve platform vendor"));
-    println!(" - Version: {}", platform.version().expect("Failed to retrieve platform verison"));
+    println!(
+        " * {}",
+        platform.name().expect("Failed to retrieve platform name")
+    );
+    println!(
+        " - Vendor: {}",
+        platform
+            .vendor()
+            .expect("Failed to retrieve platform vendor")
+    );
+    println!(
+        " - Version: {}",
+        platform
+            .version()
+            .expect("Failed to retrieve platform verison")
+    );
 
     // Retrieve all devices managed by this platform.
-    let devices = ocl::Device::list_all(platform)
-        .expect("Failed to list platform devices");
+    let devices = ocl::Device::list_all(platform).expect("Failed to list platform devices");
 
     println!(" - Device count: {}", devices.len());
 
@@ -54,7 +66,10 @@ fn print_platform_info(platform: &ocl::Platform) {
 
 fn print_device_info(dev: &ocl::Device) {
     // Some general information.
-    println!("  * {}", dev.name().expect("Failed to retrieve device name"));
+    println!(
+        "  * {}",
+        dev.name().expect("Failed to retrieve device name")
+    );
 
     let version = dev.version().expect("Failed to retrieve device version");
     println!("  - Version: {}", version);
@@ -65,9 +80,9 @@ fn print_device_info(dev: &ocl::Device) {
     let max_compute_units = get_info!(dev, MaxComputeUnits);
     println!("   - Maximum compute units: {}", max_compute_units);
 
-    let max_wg_size = dev.max_wg_size().expect(
-        "Failed to retrieve max work-group size",
-    );
+    let max_wg_size = dev
+        .max_wg_size()
+        .expect("Failed to retrieve max work-group size");
     println!("   - Maximum work-group total size: {}", max_wg_size);
 
     let max_wi_sizes = get_info!(dev, MaxWorkItemSizes);
