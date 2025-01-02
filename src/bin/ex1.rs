@@ -1,5 +1,3 @@
-use ocl;
-
 fn main() {
     println!("# Exercise 1 - Platform Information");
     println!("Verify that running a simple OpenCL program works");
@@ -10,7 +8,7 @@ fn main() {
 /// about a certain device.
 macro_rules! get_info {
     ($dev:ident, $name:ident) => {{
-        use $crate::ocl::enums::{DeviceInfo, DeviceInfoResult};
+        use ocl::enums::{DeviceInfo, DeviceInfoResult};
         match $dev.info(DeviceInfo::$name) {
             Ok(DeviceInfoResult::$name(value)) => value,
             _ => panic!("Failed to retrieve device {}", stringify!($name)),
