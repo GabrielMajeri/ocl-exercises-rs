@@ -1,7 +1,8 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
+use ocl::core::ProfilingInfo;
 use ocl::flags::MemFlags;
-use ocl::{Buffer, ProQue};
+use ocl::{Buffer, CommandQueueProperties, Event, ProQue};
 
 use rand::distributions::Standard;
 use rand::{rngs::StdRng, Rng, SeedableRng};
@@ -9,11 +10,11 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use float_cmp::ApproxEqRatio;
 
 const SEED: u64 = 42;
-const N: usize = 64;
+const N: usize = 512;
 const SIZE: usize = N * N;
 
 fn main() {
-    println!("# Exercises 6 - Matrix multiplication");
+    println!("# Exercise 6 - Matrix multiplication");
     println!("Construct a kernel which multiplies two square matrices");
     matmul();
 }
@@ -56,6 +57,7 @@ pub fn matmul() {
     let pro_que = ProQue::builder()
         .src(kernel)
         .dims((N, N))
+        .queue_properties(CommandQueueProperties::PROFILING_ENABLE)
         .build()
         .expect("Failed to create OpenCL context");
 
@@ -94,12 +96,17 @@ pub fn matmul() {
         .build()
         .expect("Failed to compile OpenCL kernel");
 
-    let start = Instant::now();
+    let mut event = Event::empty();
     unsafe {
-        matmul.enq().expect("Failed to execute OpenCL kernel");
+        matmul.cmd().enew(&mut event).enq()
+            .expect("Failed to execute OpenCL kernel");
     }
-    let end = Instant::now();
-    let opencl_time = end.duration_since(start);
+
+    pro_que.queue().finish().unwrap();
+
+    let start = event.profiling_info(ProfilingInfo::Start).unwrap().time().unwrap();
+    let end = event.profiling_info(ProfilingInfo::End).unwrap().time().unwrap();
+    let opencl_time = Duration::from_nanos(end - start);
 
     // Read back the result into `dest`.
     let mut dest = vec![0.0; SIZE];

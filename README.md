@@ -19,3 +19,4 @@ To run the exercises, use `cargo run --release --bin <exercise name>`.
 - Exercise 5: SOLVED
 - Exercise 6: SOLVED
 - Exercise 7: SOLVED
+- Exercise 8: SOLVED

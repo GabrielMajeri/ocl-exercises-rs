@@ -14,13 +14,13 @@ const N: usize = 512;
 const SIZE: usize = N * N;
 
 fn main() {
-    println!("# Exercise 7 - Optimized matrix multiplication");
+    println!("# Exercise 8 - Optimized matrix multiplication, using local memory");
     println!("Construct a kernel which multiplies two square matrices,");
-    println!("where each work item computes a row of the result matrix");
-    matmul_opt_row();
+    println!("where each work group stores a copy of the column it works with in local memory.");
+    matmul_opt_local_memory();
 }
 
-pub fn matmul_opt_row() {
+pub fn matmul_opt_local_memory() {
     // Generate some matrices containing random data.
     let mut rng = StdRng::seed_from_u64(SEED);
 
@@ -53,7 +53,7 @@ pub fn matmul_opt_row() {
     let cpu_time = end.duration_since(start);
 
     // Load the OCL kernel source code.
-    let kernel = include_str!("../kernels/matmul_opt_row.cl");
+    let kernel = include_str!("../kernels/matmul_opt_local_memory.cl");
 
     // Compile the kernel into a runnable program.
     let pro_que = ProQue::builder()
@@ -90,11 +90,12 @@ pub fn matmul_opt_row() {
 
     // Execute `dest_buf = a_buf @ b_buf`
     let matmul = pro_que
-        .kernel_builder("matmul_opt_row")
+        .kernel_builder("matmul_opt_local_memory")
         .arg(N as i32)
         .arg(&a_buf)
         .arg(&b_buf)
         .arg(&dest_buf)
+        .arg_local::<f32>(N)
         .build()
         .expect("Failed to compile OpenCL kernel");
 

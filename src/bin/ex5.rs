@@ -12,7 +12,7 @@ const SEED: u64 = 42;
 const SIZE: usize = 1024;
 
 fn main() {
-    println!("# Exercises 5 - Triple vector addition");
+    println!("# Exercise 5 - Triple vector addition");
     println!(
         "Construct a kernel which directly adds three input vector into a single output vector"
     );
