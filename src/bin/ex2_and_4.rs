@@ -1,8 +1,9 @@
 use ocl::flags::MemFlags;
 use ocl::{Buffer, ProQue};
 
-use rand::distributions::Standard;
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use rand::RngExt;
+use rand::{rngs::StdRng, SeedableRng};
+use rand_distr::StandardNormal;
 
 use float_cmp::ApproxEqRatio;
 
@@ -20,7 +21,7 @@ pub fn vadd() {
     let mut rng = StdRng::seed_from_u64(SEED);
 
     fn generate_data(rng: &mut StdRng) -> Vec<f32> {
-        rng.sample_iter(Standard).take(SIZE).collect()
+        rng.sample_iter(StandardNormal).take(SIZE).collect()
     }
 
     let a = generate_data(&mut rng);
@@ -97,7 +98,7 @@ pub fn vadd() {
     let mut dest = vec![0.0; SIZE];
     dest_buf1.read(&mut dest).enq().unwrap();
 
-    let index = rng.gen_range(0..SIZE);
+    let index = rng.random_range(0..SIZE);
 
     let x = a[index];
     let y = b[index];
