@@ -98,12 +98,25 @@ pub fn matmul() {
         .expect("Failed to compile OpenCL kernel");
 
     let mut event = Event::empty();
+
+    let mut cmd = matmul.cmd();
+
+    if pro_que
+        .device()
+        .vendor()
+        .map(|vendor| vendor.contains("NVIDIA"))
+        .unwrap_or(false)
+    {
+        println!("Detected NVIDIA device, adjusting local work size");
+
+        // The following makes the kernel run a lot faster on NVIDIA GPUs
+        cmd = cmd.local_work_size((1, 32));
+    }
+
+    cmd = cmd.enew(&mut event);
+
     unsafe {
-        matmul
-            .cmd()
-            .enew(&mut event)
-            .enq()
-            .expect("Failed to execute OpenCL kernel");
+        cmd.enq().expect("Failed to execute OpenCL kernel");
     }
 
     pro_que.queue().finish().unwrap();
