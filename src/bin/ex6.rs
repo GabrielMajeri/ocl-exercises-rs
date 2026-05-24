@@ -116,8 +116,12 @@ pub fn matmul() {
     cmd = cmd.enew(&mut event);
 
     unsafe {
-        cmd.enq().expect("Failed to execute OpenCL kernel");
+        cmd.enq().expect("Failed to enqueue OpenCL kernel execution");
     }
+
+    // Read back the result into `dest`.
+    let mut dest = vec![0.0; SIZE];
+    dest_buf.read(&mut dest).enq().unwrap();
 
     pro_que.queue().finish().unwrap();
 
@@ -132,10 +136,6 @@ pub fn matmul() {
         .time()
         .unwrap();
     let opencl_time = Duration::from_nanos(end - start);
-
-    // Read back the result into `dest`.
-    let mut dest = vec![0.0; SIZE];
-    dest_buf.read(&mut dest).enq().unwrap();
 
     let (row, column) = (rng.random_range(0..N), rng.random_range(0..N));
 
